@@ -1,59 +1,292 @@
-"""
-DevTools MCP Server
--------------------
-Boilerplate entry point. Registers a basic MCP server with one hello-world tool.
-Interns: add new tools in this file or split into separate modules under server/.
-"""
+from mcp.server.fastmcp import FastMCP
+import subprocess
+import os
+import re
+import socket
+from dotenv import dotenv_values
 
-from mcp.server import Server
-from mcp.server.stdio import stdio_server
-from mcp.types import Tool, TextContent
-import asyncio
+# -----------------------------
+# FORCE PROJECT WORKING DIRECTORY
+# -----------------------------
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+os.chdir(BASE_DIR)
 
-app = Server("devtools-mcp")
+mcp = FastMCP("DevTools MCP Server")
 
-
-@app.list_tools()
-async def list_tools() -> list[Tool]:
-    return [
-        Tool(
-            name="hello_devtools",
-            description="A placeholder tool. Replace this with real dev tools.",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "message": {
-                        "type": "string",
-                        "description": "Any message to echo back."
-                    }
-                },
-                "required": ["message"]
-            }
-        ),
-        # TODO: add run_shell_command tool
-        # TODO: add read_file tool
-        # TODO: add write_file tool
-        # TODO: add list_directory tool
-        # TODO: add search_in_files tool
-        # TODO: add git_status tool
-        # TODO: add read_env_file tool
-        # TODO: add check_port tool
-    ]
+# -----------------------------
+# HELLO TOOL
+# -----------------------------
+@mcp.tool()
+def hello():
+    return "Hello from DevTools MCP Server!"
 
 
-@app.call_tool()
-async def call_tool(name: str, arguments: dict) -> list[TextContent]:
-    if name == "hello_devtools":
-        msg = arguments.get("message", "")
-        return [TextContent(type="text", text=f"DevTools MCP says: {msg}")]
+# -----------------------------
+# SHELL COMMAND TOOL
+# -----------------------------
+@mcp.tool()
+def run_shell(command: str):
 
-    return [TextContent(type="text", text=f"Unknown tool: {name}")]
+    """
+    Run shell command and return stdout/stderr.
+    """
+
+    try:
+
+        result = subprocess.run(
+            command,
+            shell=True,
+            capture_output=True,
+            text=True,
+            timeout=15
+        )
+
+        return {
+            "stdout": result.stdout,
+            "stderr": result.stderr,
+            "returncode": result.returncode
+        }
+
+    except Exception as e:
+        return str(e)
 
 
-async def main():
-    async with stdio_server() as (read_stream, write_stream):
-        await app.run(read_stream, write_stream, app.create_initialization_options())
+# -----------------------------
+# READ FILE TOOL
+# -----------------------------
+@mcp.tool()
+def read_file(path: str):
+
+    """
+    Read file contents.
+    """
+
+    try:
+
+        with open(path, "r", encoding="utf-8") as f:
+            return f.read()
+
+    except Exception as e:
+        return str(e)
+
+
+# -----------------------------
+# WRITE FILE TOOL
+# -----------------------------
+@mcp.tool()
+def write_file(path: str, content: str):
+
+    """
+    Write content to file.
+    """
+
+    try:
+
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(content)
+
+        return "File written successfully."
+
+    except Exception as e:
+        return str(e)
+
+
+# -----------------------------
+# LIST DIRECTORY TOOL
+# -----------------------------
+@mcp.tool()
+def list_directory(path: str):
+
+    """
+    Recursively list files in directory.
+    """
+
+    files = []
+
+    try:
+
+        for root, dirs, filenames in os.walk(path):
+
+            for filename in filenames:
+
+                full_path = os.path.join(root, filename)
+
+                files.append(full_path)
+
+        return files
+
+    except Exception as e:
+        return str(e)
+
+
+# -----------------------------
+# REGEX SEARCH TOOL
+# -----------------------------
+@mcp.tool()
+def search_text(path: str, pattern: str):
+
+    """
+    Search text across files using regex.
+    """
+
+    matches = []
+
+    try:
+
+        for root, dirs, files in os.walk(path):
+
+            for file in files:
+
+                filepath = os.path.join(root, file)
+
+                try:
+
+                    with open(filepath, "r", encoding="utf-8") as f:
+
+                        content = f.read()
+
+                        if re.search(pattern, content):
+
+                            matches.append(filepath)
+
+                except:
+                    pass
+
+        return matches
+
+    except Exception as e:
+        return str(e)
+
+
+# -----------------------------
+# GIT STATUS TOOL
+# -----------------------------
+@mcp.tool()
+def git_status():
+
+    """
+    Get git status.
+    """
+
+    try:
+
+        result = subprocess.run(
+            ["git", "status"],
+            capture_output=True,
+            text=True,
+            timeout=10
+        )
+
+        return result.stdout
+
+    except Exception as e:
+        return str(e)
+
+
+# -----------------------------
+# GIT DIFF TOOL
+# -----------------------------
+@mcp.tool()
+def git_diff():
+
+    """
+    Get git diff.
+    """
+
+    try:
+
+        result = subprocess.run(
+            ["git", "diff"],
+            capture_output=True,
+            text=True,
+            timeout=10
+        )
+
+        return result.stdout
+
+    except Exception as e:
+        return str(e)
+
+
+# -----------------------------
+# GIT LOG TOOL
+# -----------------------------
+@mcp.tool()
+def git_log():
+
+    """
+    Get git log.
+    """
+
+    try:
+
+        result = subprocess.run(
+            ["git", "log", "--oneline"],
+            capture_output=True,
+            text=True,
+            timeout=10
+        )
+
+        return result.stdout
+
+    except Exception as e:
+        return str(e)
+
+
+# -----------------------------
+# READ ENV TOOL
+# -----------------------------
+@mcp.tool()
+def read_env():
+
+    """
+    Read .env key-value pairs.
+    """
+
+    try:
+
+        return dict(dotenv_values(".env"))
+
+    except Exception as e:
+        return str(e)
+
+
+# -----------------------------
+# TCP PORT CHECK TOOL
+# -----------------------------
+@mcp.tool()
+def check_port(host: str, port: int):
+
+    """
+    Check if TCP port is open.
+    """
+
+    try:
+
+        s = socket.socket()
+        s.settimeout(5)
+
+        result = s.connect_ex((host, port))
+
+        s.close()
+
+        if result == 0:
+            return "Port is open"
+
+        else:
+            return "Port is closed"
+
+    except Exception as e:
+        return str(e)
+
+
+# -----------------------------
+# MAIN
+# -----------------------------
+def main():
+
+    mcp.run(transport="stdio")
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
