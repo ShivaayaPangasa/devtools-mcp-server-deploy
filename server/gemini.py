@@ -1,24 +1,30 @@
-"""
-gemini.py
----------
-Stub for Gemini API calls. Interns: replace the placeholder response
-with real google-generativeai SDK calls.
-"""
+import requests
 
-import os
-
-# from google import generativeai as genai  # uncomment when ready
-# genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-
+OLLAMA_URL = "http://localhost:11434/api/generate"
 
 def ask_gemini(prompt: str) -> str:
     """
-    Send a prompt to Gemini and return the response text.
-    Currently returns a stub response.
+    Local Llama-based inference using Ollama.
+    Replaces Gemini API dependency while preserving workflow.
     """
-    # TODO: Replace with real Gemini call
-    # model = genai.GenerativeModel("gemini-pro")
-    # response = model.generate_content(prompt)
-    # return response.text
 
-    return f"[Gemini stub] Received: {prompt}"
+    try:
+
+        response = requests.post(
+            OLLAMA_URL,
+            json={
+                "model": "llama3.2:3b",
+                "prompt": prompt,
+                "stream": False
+            },
+            timeout=60
+        )
+
+        response.raise_for_status()
+
+        data = response.json()
+
+        return data.get("response", "")
+
+    except Exception as e:
+        return f"Local Llama Error: {str(e)}"
