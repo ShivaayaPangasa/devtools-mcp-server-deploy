@@ -4,6 +4,7 @@ import os
 import re
 import socket
 from dotenv import dotenv_values
+from snippet_service import save_snippet
 
 # -----------------------------
 # FORCE PROJECT WORKING DIRECTORY
@@ -279,7 +280,33 @@ def check_port(host: str, port: int):
     except Exception as e:
         return str(e)
 
+# -----------------------------
+# SHARE SNIPPET TOOL
+# -----------------------------
+@mcp.tool()
+def share_snippet(code: str, language: str):
 
+    """
+    Save code snippet, generate AI summary,
+    store in MongoDB, and return shareable URL.
+    """
+
+    try:
+
+        slug = save_snippet(
+            code=code,
+            language=language
+        )
+
+        return {
+            "message": "Snippet saved successfully",
+            "slug": slug,
+            "viewer_url": f"http://127.0.0.1:8000/view/{slug}"
+        }
+
+    except Exception as e:
+        return str(e)
+    
 # -----------------------------
 # MAIN
 # -----------------------------

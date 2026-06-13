@@ -1,30 +1,23 @@
 import requests
 
+
 OLLAMA_URL = "http://localhost:11434/api/generate"
 
+MODEL_NAME = "llama3.2:3b"
+
+
 def ask_gemini(prompt: str) -> str:
-    """
-    Local Llama-based inference using Ollama.
-    Replaces Gemini API dependency while preserving workflow.
-    """
 
-    try:
+    payload = {
+        "model": MODEL_NAME,
+        "prompt": prompt,
+        "stream": False
+    }
 
-        response = requests.post(
-            OLLAMA_URL,
-            json={
-                "model": "llama3.2:3b",
-                "prompt": prompt,
-                "stream": False
-            },
-            timeout=60
-        )
+    response = requests.post(OLLAMA_URL, json=payload)
 
-        response.raise_for_status()
+    response.raise_for_status()
 
-        data = response.json()
+    data = response.json()
 
-        return data.get("response", "")
-
-    except Exception as e:
-        return f"Local Llama Error: {str(e)}"
+    return data["response"]
