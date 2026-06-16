@@ -2,7 +2,7 @@ import secrets
 from datetime import datetime
 
 from database import snippets_collection
-from gemini import ask_gemini
+from llama import ask_llama
 
 
 def generate_slug(length=8):

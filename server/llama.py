@@ -5,8 +5,7 @@ OLLAMA_URL = "http://localhost:11434/api/generate"
 
 MODEL_NAME = "llama3.2:3b"
 
-
-def ask_gemini(prompt: str) -> str:
+def ask_llama(prompt: str) -> str:
 
     payload = {
         "model": MODEL_NAME,
