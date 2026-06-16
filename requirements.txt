@@ -2,6 +2,6 @@ mcp
 fastapi
 uvicorn
 pymongo
-google-generativeai
 python-dotenv
 jinja2
+requests
