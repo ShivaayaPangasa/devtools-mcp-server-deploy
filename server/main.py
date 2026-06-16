@@ -5,6 +5,10 @@ import re
 import socket
 from dotenv import dotenv_values
 from snippet_service import save_snippet
+BASE_URL = os.getenv(
+    "BASE_URL",
+    "http://127.0.0.1:8000"
+)
 
 # -----------------------------
 # FORCE PROJECT WORKING DIRECTORY
@@ -301,7 +305,7 @@ def share_snippet(code: str, language: str):
         return {
             "message": "Snippet saved successfully",
             "slug": slug,
-            "viewer_url": f"http://127.0.0.1:8000/view/{slug}"
+            "viewer_url": f"{BASE_URL}/view/{slug}"
         }
 
     except Exception as e:
